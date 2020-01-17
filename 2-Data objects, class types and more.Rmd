@@ -1,0 +1,77 @@
+---
+title: "Data objects, and class types, and more. Oh my!"
+author: "Kate Nelson"
+date: "1/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Objectives
+
+- Learn about the structure of different data types in R
+- Learn how to create and manage your data
+- Learn how to subset your data using base R
+- Begin to describe and summarize your data
+
+## Before Lab
+
+- Read Chapters 4 through 8 (except for the last section of each chapter) of [YaRrr! The Pirate's Guide to R](https://bookdown.org/ndphillips/YaRrr/basics.html) 
+
+## Before Next Class 
+
+- Read Chapters 3.1 to 3.4, 3.6, and Chapter 5 of [R for Data Science](https://r4ds.had.co.nz/data-visualisation.html)
+- Complete the Lab-3-Tutorial found in Canvas
+
+## Acknowledgements
+
+I cannot take credit for much of this tutorial. Most of this material is adapted from Emily Burchfield's fantastic tutorial on [Data Management](https://eburchfield.github.io/files/2_describing_data_lab.html). Other sections come from 
+
+xxxxxxxx
+
+### Set-up
+
+First, let's install the `gapminder` package, type `install.packages("gapminder")` in the console to pull the package off of the <code>CRAN</code> repository onto your computer. The package documentation can be found [here](https://cran.r-project.org/web/packages/gapminder/index.html) and more information about the Gapminder project can be found at [www.gapminder.org](www.gapminder.org). Take a second to learn more about the dataset… it’s pretty cool!
+
+Then load the package and the gapminder data.
+
+
+```{r gapminder}
+library(gapminder)
+data(gapminder)
+```
+
+Remember that `library()` loads the package for us in your current R session and `data()` pulls the pre-made `gapminder` dataset into your Global Environment. 
+
+You’ll also want to be sure to install and load the following packages:
+```{r tidy}
+library(tidyverse) # this loads a suite of packages including dplyr and ggplot2
+```
+
+
+###The Data
+
+Let’s inspect the new <code>gapminder</code> dataset:
+
+```{r data}
+head(gapminder)
+```
+
+Our <code>gapminder</code> dataset includes the following variables:</p>
+
+- country
+- continent
+- year
+- lifeExp or life expectancy
+- pop or population
+- gdpPercap or Gross Domestic Product (GDP) per capita
+
+Now let’s figure out what <code>class</code> each variable is. We could do this individually for each variable by typing <code>class(gapminder$variable_name)</code>, or we could use the <code>sapply()</code> function to apply the <code>class</code> function across all variables in the <code>gapminder</code> dataset. Remember, if you’re unfamiliar with any function, i.e. <code>sapply()</code>, you can ask <code>R</code> how it works using <code>?sapply()</code>.
+
+```{r class}
+sapply(gapminder, class)
+```
+
+
