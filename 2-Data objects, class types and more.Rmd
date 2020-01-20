@@ -38,7 +38,7 @@ First, let's install the `gapminder` package, type `install.packages("gapminder"
 Then load the package and the gapminder data.
 
 
-```{r gapminder}
+```{r gapminder }
 library(gapminder)
 data(gapminder)
 ```
@@ -51,7 +51,7 @@ library(tidyverse) # this loads a suite of packages including dplyr and ggplot2
 ```
 
 
-###The Data
+###The Data Structure
 
 Let’s inspect the new <code>gapminder</code> dataset:
 
@@ -68,10 +68,268 @@ Our <code>gapminder</code> dataset includes the following variables:</p>
 - pop or population
 - gdpPercap or Gross Domestic Product (GDP) per capita
 
-Now let’s figure out what <code>class</code> each variable is. We could do this individually for each variable by typing <code>class(gapminder$variable_name)</code>, or we could use the <code>sapply()</code> function to apply the <code>class</code> function across all variables in the <code>gapminder</code> dataset. Remember, if you’re unfamiliar with any function, i.e. <code>sapply()</code>, you can ask <code>R</code> how it works using <code>?sapply()</code>.
+
+Before we start working with our data it is helpful to understand its data structure. What type of data object is this? It looks like a table, right? Let's see what R says it is by using `class()`.
+
+```{r type}
+
+class(gapminder)
+
+```
+
+Notice that our R output says we have classes ‘tbl_df’, ‘tbl’ and 'data.frame'. This is saying the class of the data object is a table and/or data frame. If you check your environment window you'll notice that under the "Type" column you have `tbl_df`.
+
+OK, but what if I'd like to know what <code>class</code> each variable is? (For example: Are Country's listed as character strings or a factor/level?)
+
+
+Using Base R functionality we can use a `$` to access specific named columns in a dataframe or table. So we can access the Country column by typing `` `gapminder$Country` ``. Try checking the class of the Country column.
+
+```{r column_class}
+
+class(gapminder$country)
+
+```
+
+So the country column uses a `Factor` data class. That means each country name is instead treated as a unique value or level (treated as nominal/categorical data that takes on a number of limited possible values). More information about using factors can be found [here](http://monashbioinformaticsplatform.github.io/2015-09-28-rbioinformatics-intro-r/01-supp-factors.html). Understanding factors can be important for some modeling where categorical or ordered variables are used. On a practical level this will become very useful as we start to group data using the <code>dplyr</code> package. More fundamentally it is good to be aware of factors because if your numerical variables are in a factor class operations on those variables will not work as intended. Indeed, transformation from factor to numerical data classes is not entirely straightforward. Converting directly from a factor to a numeric data class will not report any errors, but will not provide the expected result. Instead you must convert from factor to character class and then convert from character to a numeric. One way to do this is by typing `as.numeric(as.character("your data"))`. <p>Our <em>categorical</em> variables, or variables that take on a number of limited possible values, are coded as <code>&quot;factor&quot;</code> variables. 
+
+
+Now if we want to check the class for each column we could repreat this for each variable by typing <code>class(gapminder$variable_name)</code>, or we could use the <code>sapply()</code> function to apply the <code>class</code> function across all variables in the <code>gapminder</code> dataset. Remember, if you’re unfamiliar with any function, i.e. <code>sapply()</code>, you can ask <code>R</code> how it works using <code>?sapply()</code>.
 
 ```{r class}
+
+?sapply()
+
 sapply(gapminder, class)
+
 ```
 
 
+Now we see that the year column is stored as integers, the lifeExp column is stored as numeric, etc.... 
+
+There is another function for investigating data structure is we can use that will actually tell us about the data type of the entire object and the data class of each column. Try using the `str()` function.
+
+```{r structure}
+
+str(gapminder)
+
+```
+
+Notice how each column is reported with a `$`?
+
+
+As shown above, we can extract information for each variable in the dataset using <code>$</code>. For example, if we wanted to determine the range of years in the dataset we can simply type:
+
+```{r range}
+range(gapminder$year)
+```
+
+So the data runs from 1952 to 2007. Is there data for every year over this period?
+
+```{r unique}
+unique(gapminder$year)
+```
+
+Good to know. Looks like this dataset only has observations every five years.
+
+
+### Indexing 
+
+<p>I’ll refer to base R a lot in this class. When I say this, I’m referring to the functions that come in the basic R language and that are not associated with a particular package. The functions we’ve used so far like <code>head()</code> and <code>unique()</code> are base <code>R</code> functions. Next week, we’ll start working with functions from the <code>dplyr</code> package that do <em>not</em> come from base <code>R</code> including <code>select()</code>, <code>filter()</code> and <code>arrange()</code>. In general in this class, when I refer to packages, I will just list the package name in <code>this font.</code> For example, I may refer to <code>ggplot2</code>, <code>dplyr</code>, or <code>gapminder</code>. I will refer to functions by including closed parentheses <code>()</code>, i.e. <code>select()</code>, <code>filter()</code>, etc. This is a reminder that functions almost always include <em>agruments</em> which you have to include, i.e. <code>mean(x)</code> tells <code>R</code> to compute the mean of the variable <code>x</code>. Ok, now that we’re up to speed on notation and terms, let’s start playing with our data.</p>
+
+
+Let's start by seeing what would happen if we used `str()` on a vector instead of a data frame. First store one variable from `gapminder` to a new object then check its structure.
+
+```{r vector}
+
+v<-gapminder$lifeExp
+
+str(v)
+
+```
+
+You should see a single data class name (e.g. "num" for numeric) followed by `[1:1704]`. The brackets denote indexing. Here, becuase we have a single vector and we are reporting the entire vector we see `1:1704`. This is basically saying that we are looking at the 1st through the 1704th items in the vector (which is all items in the vector). Not sure about this? You can double-check the number of records in this vector using `length()`.
+
+Now let's try indexing on a data frame instead of a vector. With the vector within the `[]` we had one range, for a dataframe we will have two ranges: `[x,y]`. In this case we have indexing for our **rows/records** in the x slot and indexing for our **columns/variables** in the y slot. (Some functions wil include an argument asking along which dimension you would like to calculate something. In this case **x** is the **1st** dimension and **y** is the **2nd** dimension.)
+
+Let’s say you want to extract observations for the country of Sri Lanka. We can use base R to index the full dataset to create a smaller dataset:
+
+```{r index}
+sri_lanka <- gapminder[gapminder$country == "Sri Lanka", ]
+head(sri_lanka)
+```
+
+Don’t forget the <code>,</code> after <code>&"quot;"Sri Lanka"&quot;"</code>! This tells R that you want to find ALL rows in which <code>country == "Sri Lanka"&quot;"</code> and to include ALL columns in the dataset. (So leaving a slot empty defaults to include all.) If you only wanted the first column, the you could type <code>gapminder[gapminder$country == &quot;Sri Lanka&quot;, 1]</code>. Note that in R, <code>=</code>is equivalent ot `<-` and is used for assignment, i.e. to create a variable such as <code>x = 5</code>. On the other hand, <code>==</code> is used for equality testing, i.e. if we want to confirm that the variable <code>x</code> we just created is, in fact, equal to 5, we could type <code>x==5</code>. The console should return <code>TRUE</code>. Try it!
+
+<p>Back to the indexing. If we didn’t want ALL of the columns and only wanted the variable <code>gdpPercap</code> for Sri Lanka, we could do the following:</p>
+```{r srilanka}
+sri_lanka_gdp <- gapminder[gapminder$country == "Sri Lanka", "gdpPercap"]
+head(sri_lanka_gdp)
+```
+
+Since we only want a single variable, this returns a <code>vector</code> listing all observations of Sri Lankan GDP per capita over the years included in the dataset. This isn’t very useful because we don’t know what years are associated with each observation. Let’s pull out yearly data too.</p>
+
+```{r srilankadf}
+sri_lanka_gdp <- gapminder[gapminder$country == "Sri Lanka", c("year", "gdpPercap")]
+head(sri_lanka_gdp)
+```
+
+<p>Here we create a list of column names we want to pull out of the dataset using <code>c()</code> which combines values into a vector or list much like we did last week. Note that you can use either a list of column names or a list of numerical indexes (e.g. Use c(1,3,5) to select the first, third, and fifth columns, or use c(1:5) to select columns one through five).
+
+Now let's see if you can calculate the average, maximum, and minimum GDP per capita for Sri Lanka over the last 50 years.
+
+```{r srilanka_stats}
+
+mean(sri_lanka_gdp$gdpPercap, na.rm=TRUE)
+
+max(sri_lanka_gdp$gdpPercap, na.rm=TRUE)
+
+min(sri_lanka_gdp$gdpPercap, na.rm=TRUE)
+
+```
+
+Ok, what if I want to know the average GDP per capita for all countries or for all years? `aggregate()` can help with that.
+
+```{r agg}
+
+t<-aggregate(gapminder[,"gdpPercap"], by= gapminder["country"], FUN=mean, na.action=rm)
+head(t)
+
+
+t2<-aggregate(gapminder[,"gdpPercap"], by= gapminder["year"], FUN=mean, na.action=rm)
+head(t2)
+
+```
+
+
+Want to see how countries ranks? Let's try `order()`.
+
+```{r order}
+
+t<-t[order(t$gdpPercap),]
+head(t)
+
+```
+
+
+This list the countries by GDP in ascending order. What about descending order?
+
+```{r order2}
+
+t<-t[order(-t$gdpPercap),]
+head(t)
+
+```
+
+What if we want to add a new variable to our dataset, say an indicator of whether or not a country is located in the continent Africa. We can add a named column to our <code>data.frame</code> using the `$` and `<-` operators .</p>
+
+```{r africa}
+
+africa<- gapminder #assign the original gapminder dataset to a new object for further manipulation
+
+africa$africa <- ifelse(gapminder$continent == "Africa", 1, 0)
+
+head(africa)
+
+head(africa[africa$africa==1,]) #confirm that locations with continent == Africa have an africa value of 1
+```
+
+
+We've now covered some of the basics of indexing and subsetting. I recommend these tutorials on <ahref="http://swcarpentry.github.io/r-novice-gapminder/06-data-subsetting/">data subsetting</a>, <ahref="http://swcarpentry.github.io/r-novice-gapminder/05-data-structures-part2/">data manipulation</a> to help solidfy and extend your understanding. 
+We will introduce data manipulation using `dplyr` next week, but will still make use of base R frequently.
+
+<center>Make sure you’re familiar with how to index and wrangle data in base R before we proceed!</center>
+
+### Visualizing our data(
+
+For now we'll take a look at using base R `plot()` and `hist()`. Next week we'll start using `ggplot` to make figures.
+
+Let's start with the quickest and simplest overall visualization of the entire `gapminder` dataset.
+
+```{r plot}
+
+plot(gapminder)
+
+```
+
+This produces a matrix of scatterplots where one variable is along the **y-axis** and another is along the **x-axis**. Recall that some of our variables are `factor` class (or categorical data). Plotting them along x-y axes doesn't really make much sense. Let's try plotting this again, but only for the numeric variables by subsetting within `plot()`.
+
+```{r plot_sub}
+
+# manually specify --> totally fine for small datasets, not so great when you have many variables or for scaling up/automating
+  classes<-sapply(gapminder, class)
+  classes 
+  
+  plot(gapminder[,c("year","lifeExp","pop","gdpPercap")])
+  plot(gapminder[,c(3,4,5,6)])
+
+# one way to do this without manually specifying
+  isnum<-classes[classes != "factor"] #subset of classes vector with only columns that are not factors
+  isnum
+  
+  plot(gapminder[ , names(gapminder) %in% names(isnum)]) #plot for the subset where column names in gapminder match the column names in the isnum vector
+
+# another way to subset and plot using the which function
+  isnum_col<-which(classes != "factor") #return a vector of the indices where class is not factor
+  
+  isnum_col<-which(sapply(gapminder, class) != "factor") #same as above, but we use only 1 line instead of 2
+  
+  
+  plot(gapminder[,isnum_col]) #plot for the subset of gapminder where column indices are in isnum_col
+  
+  plot(gapminder[ ,which(sapply(gapminder, class) != "factor")]) #plot for the subset of gapminder where column indices are in isnum_col
+
+```
+
+As you can see there are lots of potential ways to do this. Many more than I will show here.
+
+- What do the plots tell you?
+
+Let's try some more plots. What it I wanted to examine the distribution of the GDP, life expectancy, and population variables?
+
+```{r hist}
+
+hist(gapminder$gdpPercap)
+
+hist(gapminder$lifeExp)
+
+hist(gapminder$pop)
+
+```
+
+
+
+We can see that life expectancy has a near-normal distribution, while the other variables certainly do not. Maybe they are log-normal? Let's check...
+
+```{r hist2}
+
+hist(log(gapminder$pop, 10))
+hist(log(gapminder$gdpPercap, 10 ))
+
+```
+
+Well, they certainly look more normal now. (Note that I'm using a log base 10 here.) Hmmmm, so the distribution of GDP and population are a lot more uneven across counties and years (by orders of magnitude) while the distribution of life expectancy is relatively constrained.
+
+Now let's see how GDP and life expectancy vary across countries and continents.
+
+```{r plots2}
+
+plot(gapminder$country, gapminder$gdpPercap)
+
+plot(gapminder$continent, gapminder$gdpPercap)
+
+plot(gapminder$country, gapminder$lifeExp)
+
+plot(gapminder$continent, gapminder$lifeExp)
+
+```
+
+
+As you can see the default plot type for categorical - numerical data plots is not a scatter plot, but instead a box-and-whisker plot. These plots show the mean for the variables as a dark line, the interquartile range (where 25% to 75% data falls) in the box, the lines ("whiskers") show where 95% of the data falls and the points are outliers (data points that fall outside the range where 95% of the data is). 
+
+- What do these plots tell you?
+
+
+  For now we won't worry about formatting these plots. Next week we'll start looking at `ggplot` and we'll customize some formatting using that package.
+  
+  
+  
